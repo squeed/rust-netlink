@@ -8,3 +8,8 @@ edition = "2018"
 libc = "0.2"
 log = "0.4"
 byteorder = "1"
+eui48 = "0.4"
+bitflags = "1"
+
+[build-dependencies]
+bindgen = "0.47.1"
