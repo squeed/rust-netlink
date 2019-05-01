@@ -1,6 +1,8 @@
 #![allow(dead_code)]
-mod proto;
-mod type_route;
+pub mod hl;
+pub mod proto;
+pub mod type_route;
+pub mod uapi;
 
 pub trait Serializable {
     fn to_bytes(&self) -> Vec<u8>;
