@@ -15,6 +15,9 @@ fn main() {
             for link in links {
                 println!("{:?}", &link);
                 println!("{}: {}", link.index, link.name.unwrap().to_str().unwrap());
+
+                let ilink = netlink::hl::iface::link_get_by_index(&mut sock, link.index).unwrap();
+                println!("link by index is {}", ilink.name.unwrap().to_str().unwrap());
             }
         }
     }

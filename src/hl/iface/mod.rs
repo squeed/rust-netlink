@@ -1,4 +1,11 @@
 /// iface: interface management
+/// higher-level methods for dealing with interfaces.
+///
+/// Interfaces are represented by the kernel as a small set of properties and a
+/// list of key-value pairs. Thus, everything is modeled as an Option, even though
+/// the kernel will "always" send them when retrieving a link.
+///
+/// Likewise, when creating or updating a link, most fields are optional.
 mod ifflags;
 pub use self::ifflags::IfFlags;
 use crate::proto::conn::NetlinkSocket;
@@ -8,7 +15,7 @@ use crate::uapi;
 use crate::Serializable;
 use std::default::Default;
 use std::ffi::CString;
-use std::io::Result;
+use std::io::{Error, ErrorKind, Result};
 
 // First attempt: everything is a Maybe
 
@@ -179,4 +186,24 @@ pub fn link_list(sock: &mut NetlinkSocket) -> Result<Vec<LinkMsg>> {
     }
 
     Ok(out)
+}
+
+pub fn link_get_by_index(sock: &mut NetlinkSocket, idx: i32) -> Result<LinkMsg> {
+    let mut req = NetlinkMessage::new(
+        uapi::RTM_GETLINK as u16,
+        (uapi::NLM_F_ACK | uapi::NLM_F_REQUEST) as u16,
+    );
+    let msg = IfInfoMsg {
+        family: uapi::AF_UNSPEC as u8,
+        index: idx,
+        ..Default::default()
+    };
+    req.add_data(msg.to_bytes());
+
+    let resp = sock.exec(&mut req, Some(uapi::RTM_NEWLINK as u16))?;
+    match resp.len() {
+        0 => Err(Error::new(ErrorKind::NotFound, "link not found")),
+        1 => LinkMsg::from_message(&resp[0]),
+        _ => Err(Error::new(ErrorKind::Other, "too many links returned")),
+    }
 }
